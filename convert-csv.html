@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Konversi Data Mesin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #4f46e5, #9333ea);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      padding: 24px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    h1 {
+      font-size: 22px;
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-weight: 600;
+      text-align: center;
+    }
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      resize: vertical;
+      box-sizing: border-box;
+      font-family: monospace;
+    }
+    .options {
+      margin-top: 12px;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      font-size: 14px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+    }
+    footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Konversi Data Mesin</h1>
+    <textarea id="inputData" placeholder="Tempel data mesin di sini...">User ID: F0222000445, Nama: IrwanS, Waktu: 2025-09-05 06:51:51, Status: 1
+User ID: KTHL08250018, Nama: Faris Jainudin, SH, Waktu: 2025-09-05 06:51:55, Status: 2</textarea>
+
+    <div class="options">
+      <label>
+        <input type="radio" name="mode" value="csv" checked> CSV (Excel)
+      </label>
+      <label>
+        <input type="radio" name="mode" value="txt"> TXT (Notepad)
+      </label>
+    </div>
+
+    <button onclick="convertAndDownload()">Konversi & Download</button>
+
+    <footer>© 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
+  </div>
+
+<script>
+const statusMap = {
+  "1": "C/Masuk",
+  "2": "C/Keluar",
+  "3": "Lembur Masuk",
+  "4": "Lembur Keluar"
+};
+
+function convertAndDownload() {
+  const rawText = document.getElementById('inputData').value.trim();
+  const lines = rawText.split('\n');
+  let csv = 'NIK,NAMA,Waktu,Status\n';
+
+  lines.forEach(line => {
+    const nik = (line.match(/User ID:\s*([^,]+)/) || [])[1]?.trim() || "";
+    const nama = (line.match(/Nama:\s*(.+?),\s*Waktu:/) || [])[1]?.trim() || "";
+    let waktu = (line.match(/Waktu:\s*([^,]+)/) || [])[1]?.trim() || "";
+    let status = (line.match(/Status:\s*(\d+)/) || [])[1]?.trim() || "";
+
+    if (waktu.match(/^\d{4}-\d{2}-\d{2}/)) {
+      const [datePart, timePart] = waktu.split(' ');
+      const [y, m, d] = datePart.split('-');
+      const [hh, mm] = timePart.split(':');
+      waktu = `${d}/${m}/${y} ${hh}:${mm}`;
+    }
+
+    status = statusMap[status] || status;
+    csv += `${nik},"${nama}",${waktu},${status}\n`;
+  });
+
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  const type = (mode === 'csv') ? 'text/csv' : 'text/plain';
+  const ext = (mode === 'csv') ? 'csv' : 'txt';
+
+  const blob = new Blob([csv], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `data_mesin_convert.${ext}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

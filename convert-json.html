@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excel → JSON (Mesin Fingerprint)</title>
+  <!-- SheetJS (xlsx) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root { --bg:#0f172a; --card:#111827; --muted:#94a3b8; --fg:#e5e7eb; --accent:#22c55e; --danger:#ef4444; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background: var(--bg); color: var(--fg); }
+    .wrap { max-width: 980px; margin: 32px auto; padding: 0 16px; }
+    .card { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.08); padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    h1 { font-size: clamp(20px, 3.2vw, 32px); margin: 0 0 8px; }
+    p.sub { color: var(--muted); margin-top: 0; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 860px){ .row{ grid-template-columns: 1.2fr .8fr; } }
+    label { display:block; font-weight:600; margin-bottom: 6px; }
+    input[type="file"], button, select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: #0b1220; color: var(--fg); }
+    button { cursor: pointer; transition: transform .05s ease, background .2s ease; }
+    button.primary { background: linear-gradient(90deg, #16a34a, #22c55e); border: none; }
+    button.secondary { background: #0b1220; }
+    button:active { transform: translateY(1px); }
+    .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    textarea { width: 100%; min-height: 320px; background: #0b1220; color: var(--fg); border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); padding: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
+    .badge { display:inline-flex; gap:6px; align-items:center; padding: 6px 10px; border-radius: 999px; border: 1px dashed rgba(255,255,255,0.18); color: var(--muted); font-size: 12px; }
+    .pill { background: rgba(34,197,94,0.12); color: #86efac; border-color: rgba(34,197,94,0.32); }
+    .error { color: #fecaca; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); padding: 10px 12px; border-radius: 10px; }
+    .ok { color: #bbf7d0; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); padding: 10px 12px; border-radius: 10px; }
+    .footer { margin-top: 20px; display:flex; gap:10px; flex-wrap: wrap; }
+    .inline { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .tbl { width:100%; border-collapse: collapse; font-size: 13px; }
+    .tbl th,.tbl td { border-bottom: 1px solid rgba(255,255,255,0.08); text-align:left; padding: 8px; }
+    .hint { font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="inline" style="justify-content:space-between;">
+        <div>
+          <h1>Excel → JSON Converter</h1>
+          <p class="sub">Untuk daftar <strong>Mesin Fingerprint</strong> dengan kolom: <code>Nama Mesin</code>, <code>IP Address</code>, <code>Port</code>.</p>
+        </div>
+        <span class="badge pill">100% client‑side • aman</span>
+      </div>
+
+      <div class="row" style="margin-top:18px;">
+        <section>
+          <label for="file">Upload Excel (.xlsx / .xls / .csv)</label>
+          <input type="file" id="file" accept=".xlsx,.xls,.csv" />
+
+          <div class="grid-2" style="margin-top:12px;">
+            <button class="secondary" id="btnTemplate">⬇️ Download Template Excel</button>
+            <button class="primary" id="btnConvert">⚙️ Convert ke JSON</button>
+          </div>
+
+          <div id="status" style="margin-top:12px;"></div>
+
+          <div style="margin-top:16px;" class="hint">
+            <strong>Catatan:</strong> Pastikan header kolom persis: <em>Nama Mesin</em>, <em>IP Address</em>, <em>Port</em>. Baris kosong akan diabaikan.
+          </div>
+        </section>
+
+        <section>
+          <label for="json">Hasil JSON</label>
+          <textarea id="json" placeholder="Hasil akan muncul di sini…" spellcheck="false"></textarea>
+          <div class="footer">
+            <button class="secondary" id="btnCopy">📋 Copy</button>
+            <button class="primary" id="btnDownloadJSON">💾 Download JSON</button>
+          </div>
+        </section>
+      </div>
+
+      <details style="margin-top:18px;">
+        <summary class="muted">Lihat contoh struktur JSON</summary>
+        <pre style="white-space:pre-wrap;word-break:break-word;background:#0b1220;border-radius:10px;padding:12px;border:1px solid rgba(255,255,255,.12);">{
+  "HR110": {
+    "ip": "10.30.39.189",
+    "port": 4370
+  },
+  "GAS": {
+    "ip": "10.30.39.159",
+    "port": 4370
+  }
+}</pre>
+      </details>
+
+      <div style="margin-top:18px;" class="muted">Versi: 1.0 • Dibuat untuk file dengan header persis seperti Excel yang Anda berikan.</div>
+    </div>
+  </div>
+
+  <script>
+  const q = sel => document.querySelector(sel);
+  const statusBox = q('#status');
+  const fileInput = q('#file');
+  const jsonArea = q('#json');
+
+  function setStatus(html, type = 'ok') {
+    statusBox.innerHTML = `<div class="${type}">${html}</div>`;
+  }
+
+  function clearStatus(){ statusBox.innerHTML = ''; }
+
+  function headerNormalize(h){
+    return String(h || '')
+      .replace(/\s+/g,' ') // collapse spaces
+      .replace(/[\u00A0]/g,' ') // nbsp -> space
+      .trim()
+      .toLowerCase();
+  }
+
+  function validateRow(row){
+    if(!row) return false;
+    const name = String(row['Nama Mesin'] ?? '').trim();
+    const ip = String(row['IP Address'] ?? '').trim();
+    const port = row['Port'];
+    if(!name || !ip) return false;
+
+    // Basic IP v4 check
+    const okIP = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(ip);
+    if(!okIP) return false;
+
+    const p = Number(port);
+    if(!Number.isFinite(p) || p <= 0 || p > 65535) return false;
+
+    return true;
+  }
+
+  function rowsToJSON(rows){
+    const out = {};
+    for(const r of rows){
+      if(!validateRow(r)) continue;
+      const key = String(r['Nama Mesin']).trim();
+      const ip = String(r['IP Address']).trim();
+      const port = Number(r['Port']);
+      out[key] = { ip, port };
+    }
+    return out;
+  }
+
+  function workbookFromArrayOfObjects(rows, sheetName = 'Data'){
+    const ws = XLSX.utils.json_to_sheet(rows, {
+      header: ['Nama Mesin','IP Address','Port']
+    });
+    // Auto width
+    const widths = [
+      { wch: 28 }, // Nama Mesin
+      { wch: 16 }, // IP
+      { wch: 8 }   // Port
+    ];
+    ws['!cols'] = widths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    return wb;
+  }
+
+  function downloadTemplate(){
+    const rows = [
+      { 'Nama Mesin': 'HR110', 'IP Address': '10.30.39.189', 'Port': 4370 },
+      { 'Nama Mesin': 'MO1', 'IP Address': '10.30.39.217', 'Port': 4370 },
+    ];
+    const wb = workbookFromArrayOfObjects(rows, 'Template');
+
+    // Add info sheet
+    const info = [
+      ['Petunjuk'],
+      ['Isi sheet Template dengan kolom persis: Nama Mesin, IP Address, Port'],
+      ['Baris kosong akan diabaikan. Port default 4370.']
+    ];
+    const wsInfo = XLSX.utils.aoa_to_sheet(info);
+    wsInfo['!cols'] = [{wch:60}];
+    XLSX.utils.book_append_sheet(wb, wsInfo, 'Info');
+
+    XLSX.writeFile(wb, 'Template_Mesin_Fingerprint.xlsx');
+  }
+
+  async function convert(){
+    clearStatus();
+    const f = fileInput.files && fileInput.files[0];
+    if(!f){ setStatus('Pilih file Excel terlebih dahulu.', 'error'); return; }
+
+    try {
+      const data = await f.arrayBuffer();
+      const wb = XLSX.read(data, { type: 'array' });
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+
+      // Read header row exactly and remap normalized headers to expected names
+      let rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if(!rows.length){ setStatus('Sheet kosong atau tidak ada data.', 'error'); return; }
+
+      // Normalize headers of first row's keys by remapping
+      const wanted = {
+        'nama mesin': 'Nama Mesin',
+        'ip address': 'IP Address',
+        'port': 'Port'
+      };
+
+      rows = rows.map(obj => {
+        const mapped = {};
+        for(const k of Object.keys(obj)){
+          const norm = headerNormalize(k);
+          const mapTo = wanted[norm];
+          if(mapTo){ mapped[mapTo] = obj[k]; }
+        }
+        return mapped;
+      });
+
+      // Validate presence of headers
+      const hasNama = rows.some(r => 'Nama Mesin' in r);
+      const hasIP = rows.some(r => 'IP Address' in r);
+      const hasPort = rows.some(r => 'Port' in r);
+      if(!(hasNama && hasIP && hasPort)){
+        setStatus('Header tidak sesuai. Pastikan ada kolom: "Nama Mesin", "IP Address", dan "Port".', 'error');
+        return;
+      }
+
+      // Filter invalid/empty rows
+      const valid = rows.filter(validateRow);
+      if(!valid.length){ setStatus('Tidak ada baris valid yang bisa dikonversi. Cek format IP/Port.', 'error'); return; }
+
+      const json = rowsToJSON(valid);
+      const pretty = JSON.stringify(json, null, 4);
+      jsonArea.value = pretty;
+      setStatus(`Berhasil mengonversi ${valid.length} baris dari sheet "${sheetName}".`, 'ok');
+    } catch (err){
+      console.error(err);
+      setStatus('Gagal membaca file. Pastikan format .xlsx/.xls/.csv valid.', 'error');
+    }
+  }
+
+  function downloadJSON(){
+    const text = jsonArea.value.trim();
+    if(!text){ setStatus('Tidak ada hasil JSON untuk diunduh.', 'error'); return; }
+    const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'mesin_fingerprint.json';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }
+
+  function copyJSON(){
+    const text = jsonArea.value;
+    if(!text){ setStatus('Tidak ada teks untuk disalin.', 'error'); return; }
+    navigator.clipboard.writeText(text).then(() => setStatus('JSON disalin ke clipboard.','ok'))
+      .catch(() => setStatus('Gagal menyalin ke clipboard.','error'));
+  }
+
+  q('#btnTemplate').addEventListener('click', downloadTemplate);
+  q('#btnConvert').addEventListener('click', convert);
+  q('#btnDownloadJSON').addEventListener('click', downloadJSON);
+  q('#btnCopy').addEventListener('click', copyJSON);
+  </script>
+</body>
+</html>
