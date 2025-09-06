@@ -141,6 +141,65 @@ function downloadSemuaMesin() {
     openNewWindow(url);
   });
 }
+// ... kode lama tetap
+
+async function hapusSatuMesin() {
+  const baseUrl = document.getElementById("base_url").value;
+  const mesin = document.getElementById("mesin").value;
+  if (!mesin) { alert("Pilih mesin dulu!"); return; }
+  if (!confirm(`Yakin mau hapus data absensi mesin "${mesin}"?`)) return;
+
+  try {
+    const resp = await fetch(`${baseUrl}/hapus_absensi?mesin=${encodeURIComponent(mesin)}`, {
+      method: "DELETE"
+    });
+    const text = await resp.text();
+    alert(text);
+  } catch (e) {
+    alert("Gagal menghapus data absensi mesin ini: " + e);
+  }
+}
+
+async function hapusSemuaMesin() {
+  const baseUrl = document.getElementById("base_url").value;
+  if (!confirm("⚠️ Yakin mau hapus data absensi SEMUA mesin?")) return;
+
+  try {
+    const resp = await fetch(`${baseUrl}/hapus_absensi_semua`, {
+      method: "DELETE"
+    });
+    const text = await resp.text();
+    alert(text);
+  } catch (e) {
+    alert("Gagal menghapus data absensi semua mesin: " + e);
+  }
+}
+async function hapusSatuMesin() {
+  const baseUrl = document.getElementById("base_url").value;
+  const mesin = document.getElementById("mesin").value;
+  const start = document.getElementById("start_time").value;
+  const end = document.getElementById("end_time").value;
+  if (!mesin) { alert("Pilih mesin dulu!"); return; }
+  if (!start || !end) { alert("Isi waktu mulai dan selesai dulu!"); return; }
+  if (!confirm(`Yakin mau hapus data absensi mesin "${mesin}" dari ${start} sampai ${end}?`)) return;
+
+  try {
+    const resp = await fetch(`${baseUrl}/hapus_absensi`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mesin: mesin,
+        start_time: start.replace("T", " ") + ":00",
+        end_time: end.replace("T", " ") + ":00"
+      })
+    });
+    const text = await resp.text();
+    alert(text);
+  } catch (e) {
+    alert("Gagal menghapus data absensi mesin ini: " + e);
+  }
+}
+
 </script>
 </head>
 <body onload="checkExpiry(); loadMachinesDefault();">
@@ -165,13 +224,16 @@ function downloadSemuaMesin() {
       <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
       <label>Pilih Bulan (opsional):</label>
       <input type="month" id="bulan"><br>
+<label>Waktu Mulai:</label>
+<input type="datetime-local" id="start_time"><br>
+<label>Waktu Selesai:</label>
+<input type="datetime-local" id="end_time"><br>
       <button class="green" onclick="downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
       <button class="blue" onclick="downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
+      <button class="green" onclick="hapusSatuMesin()">🗑️ Hapus Data Mesin Terpilih</button>
+      <button class="blue" onclick="hapusSemuaMesin()">🗑️ Hapus Semua Data Mesin</button>
     </div>
   </div>
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 </body>
 </html>
-
-
-
