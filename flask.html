@@ -25,10 +25,21 @@
     color: white; text-decoration: none; margin-left: 1rem; transition: color .3s;
   }
   nav .menu a:hover, nav .menu a.active { color: #a5b4fc; }
-  nav .menu2 a {
-    color: white; text-decoration: none; margin-left: 1rem; transition: color .3s;
+  /* Nav .menu2 a rule was redundant, 'menu2' is for the div, not an 'a' tag within it */
+  nav .menu2 {
+    color: white; /* Text color for the logout div */
+    cursor: pointer; /* Indicate it's clickable */
+    margin-left: 1rem; /* Spacing */
+    padding: 0.5rem 1rem; /* Add some padding for better click area */
+    border-radius: 0.5rem; /* Rounded corners */
+    background: rgba(255,255,255,0.1); /* Subtle background */
+    transition: background 0.3s, transform 0.2s; /* Smooth transitions */
+    font-weight: bold; /* Make it stand out */
   }
-  nav .menu2 a:hover, nav .menu a.active { color: #a5b4fc; }
+  nav .menu2:hover {
+    background: rgba(255,255,255,0.2); /* Slightly darker on hover */
+    transform: translateY(-2px); /* Slight lift on hover */
+  }
   .container {
     flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem;
   }
@@ -70,153 +81,6 @@
   footer a { color: white; text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 </style>
-<script>
- <script type="module">
- import { auth } from "./firebase-config.js";
- import { signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-let mesinList = {};
-let expiryDate = new Date("2025-12-15T00:00:00");
-
-function checkExpiry() {
-  if (new Date() >= expiryDate) {
-    alert("404 Error Networking!! XpDt");
-  }
-}
-
-// Load dari file JSON (via upload)
-function handleFileUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      mesinList = JSON.parse(e.target.result);
-      isiDropdownMesin();
-      alert("Data mesin berhasil dimuat dari file JSON!");
-    } catch (err) {
-      alert("JSON tidak valid!");
-    }
-  };
-  reader.readAsText(file);
-}
-
-// Load dari mesin.json (default, kalau ada server)
-async function loadMachinesDefault() {
-  try {
-    const resp = await fetch('mesin.json');
-    mesinList = await resp.json();
-    isiDropdownMesin();
-  } catch (e) {
-    console.warn("Gagal load mesin.json (normal kalau tanpa server).");
-  }
-}
-
-function isiDropdownMesin() {
-  const mesinSelect = document.getElementById("mesin");
-  mesinSelect.innerHTML = "";
-  Object.keys(mesinList).forEach(m => {
-    const opt = document.createElement("option");
-    opt.value = m;
-    opt.textContent = m;
-    mesinSelect.appendChild(opt);
-  });
-}
-
-function openNewWindow(url) {
-  window.open(url, '_blank');
-}
-
-function downloadSatuMesin() {
-  if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
-  const baseUrl = document.getElementById("base_url").value;
-  const mesin = document.getElementById("mesin").value;
-  const bulan = document.getElementById("bulan").value;
-  if (!mesin) { alert("Pilih mesin dulu!"); return; }
-  let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`;
-  if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
-  openNewWindow(url);
-}
-
-function downloadSemuaMesin() {
-  if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
-  const baseUrl = document.getElementById("base_url").value;
-  const bulan = document.getElementById("bulan").value;
-  if (!Object.keys(mesinList).length) { alert("Belum ada data mesin!"); return; }
-  Object.keys(mesinList).forEach(m => {
-    let url = `${baseUrl}/lihat_absensi?mesin=${m}`;
-    if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
-    openNewWindow(url);
-  });
-}
-// ... kode lama tetap
-
-async function hapusSatuMesin() {
-  const baseUrl = document.getElementById("base_url").value;
-  const mesin = document.getElementById("mesin").value;
-  if (!mesin) { alert("Pilih mesin dulu!"); return; }
-  if (!confirm(`Yakin mau hapus data absensi mesin "${mesin}"?`)) return;
-
-  try {
-    const resp = await fetch(`${baseUrl}/hapus_absensi?mesin=${encodeURIComponent(mesin)}`, {
-      method: "DELETE"
-    });
-    const text = await resp.text();
-    alert(text);
-  } catch (e) {
-    alert("Gagal menghapus data absensi mesin ini: " + e);
-  }
-}
-
-async function hapusSemuaMesin() {
-  const baseUrl = document.getElementById("base_url").value;
-  if (!confirm("⚠️ Yakin mau hapus data absensi SEMUA mesin?")) return;
-
-  try {
-    const resp = await fetch(`${baseUrl}/hapus_absensi_semua`, {
-      method: "DELETE"
-    });
-    const text = await resp.text();
-    alert(text);
-  } catch (e) {
-    alert("Gagal menghapus data absensi semua mesin: " + e);
-  }
-}
-async function hapusSatuMesin() {
-  const baseUrl = document.getElementById("base_url").value;
-  const mesin = document.getElementById("mesin").value;
-  const start = document.getElementById("start_time").value;
-  const end = document.getElementById("end_time").value;
-  if (!mesin) { alert("Pilih mesin dulu!"); return; }
-  if (!start || !end) { alert("Isi waktu mulai dan selesai dulu!"); return; }
-  if (!confirm(`Yakin mau hapus data absensi mesin "${mesin}" dari ${start} sampai ${end}?`)) return;
-
-  try {
-    const resp = await fetch(`${baseUrl}/hapus_absensi`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mesin: mesin,
-        start_time: start.replace("T", " ") + ":00",
-        end_time: end.replace("T", " ") + ":00"
-      })
-    });
-    const text = await resp.text();
-    alert(text);
-  } catch (e) {
-    alert("Gagal menghapus data absensi mesin ini: " + e);
-  }
-}
- window.logout = async () => {
-      try {
-        await signOut(auth);
-        localStorage.removeItem("loginTime");
-        window.location.href = "index.html";
-      } catch (e) {
-        alert("Logout gagal: " + (e.message || e));
-      }
-}
-</script>
-</script>
 </head>
 <body onload="checkExpiry(); loadMachinesDefault();">
   <nav>
@@ -228,7 +92,7 @@ async function hapusSatuMesin() {
       <a href="convert-csv.html">Absensi → CSV/TXT</a>
       <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
     </div>
-    <div class="menu2" onclick="logout()">Logout2</div>
+    <div class="menu2" onclick="window.logout()">🚪 Logout</div>
    </nav>
   <div class="container">
     <div class="card">
@@ -241,10 +105,10 @@ async function hapusSatuMesin() {
       <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
       <label>Pilih Bulan (opsional):</label>
       <input type="month" id="bulan"><br>
-<label>Waktu Mulai:</label>
-<input type="datetime-local" id="start_time"><br>
-<label>Waktu Selesai:</label>
-<input type="datetime-local" id="end_time"><br>
+      <label>Waktu Mulai:</label>
+      <input type="datetime-local" id="start_time"><br>
+      <label>Waktu Selesai:</label>
+      <input type="datetime-local" id="end_time"><br>
       <button class="green" onclick="downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
       <button class="blue" onclick="downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
       <button class="green" onclick="hapusSatuMesin()">🗑️ Hapus Data Mesin Terpilih</button>
@@ -252,15 +116,164 @@ async function hapusSatuMesin() {
     </div>
   </div>
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
+
+  <script type="module">
+    // Import auth from your separate firebase-config.js file
+    import { auth } from './firebase-config.js'; 
+    // Import signOut directly from the Firebase Auth module
+    import { signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+
+
+    let mesinList = {};
+    let expiryDate = new Date("2025-12-15T00:00:00");
+
+    function checkExpiry() {
+      if (new Date() >= expiryDate) {
+        alert("404 Error Networking!! XpDt");
+      }
+    }
+
+    // Load dari file JSON (via upload)
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          mesinList = JSON.parse(e.target.result);
+          isiDropdownMesin();
+          alert("Data mesin berhasil dimuat dari file JSON!");
+        } catch (err) {
+          alert("JSON tidak valid!");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Load dari mesin.json (default, kalau ada server)
+    async function loadMachinesDefault() {
+      try {
+        const resp = await fetch('mesin.json'); // Pastikan mesin.json dapat diakses
+        mesinList = await resp.json();
+        isiDropdownMesin();
+      } catch (e) {
+        console.warn("Gagal load mesin.json (normal kalau tanpa server):", e);
+        // Opsi: Beri tahu pengguna jika daftar mesin tidak bisa dimuat
+        // alert("Gagal memuat daftar mesin. Pastikan mesin.json ada atau unggah manual.");
+      }
+    }
+
+    function isiDropdownMesin() {
+      const mesinSelect = document.getElementById("mesin");
+      mesinSelect.innerHTML = "";
+      Object.keys(mesinList).forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        mesinSelect.appendChild(opt);
+      });
+      if (Object.keys(mesinList).length === 0) {
+        let opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "-- Belum ada data --";
+        mesinSelect.appendChild(opt);
+      }
+    }
+
+    function openNewWindow(url) {
+      window.open(url, '_blank');
+    }
+
+    function downloadSatuMesin() {
+      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
+      const baseUrl = document.getElementById("base_url").value;
+      const mesin = document.getElementById("mesin").value;
+      const bulan = document.getElementById("bulan").value;
+      if (!mesin) { alert("Pilih mesin dulu!"); return; }
+      let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`; // Asumsi endpoint ini menampilkan laporan
+      if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
+      openNewWindow(url);
+    }
+
+    function downloadSemuaMesin() {
+      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
+      const baseUrl = document.getElementById("base_url").value;
+      // Untuk fungsi "download semua sekaligus" (misal: ZIP), kamu akan memanggil endpoint Flask di sini.
+      // Saat ini, ini akan membuka beberapa tab sesuai logika yang ada.
+      const bulan = document.getElementById("bulan").value;
+      if (!Object.keys(mesinList).length) { alert("Belum ada data mesin!"); return; }
+      Object.keys(mesinList).forEach(m => {
+        let url = `${baseUrl}/lihat_absensi?mesin=${m}`;
+        if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
+        openNewWindow(url);
+      });
+    }
+
+    async function hapusSemuaMesin() {
+      const baseUrl = document.getElementById("base_url").value;
+      if (!confirm("⚠️ Yakin mau hapus data absensi SEMUA mesin?")) return;
+
+      try {
+        const resp = await fetch(`${baseUrl}/hapus_absensi_semua`, {
+          method: "DELETE" // Pastikan Flask memiliki endpoint DELETE ini
+        });
+        const text = await resp.text();
+        alert(text);
+      } catch (e) {
+        alert("Gagal menghapus data absensi semua mesin: " + e);
+      }
+    }
+
+    async function hapusSatuMesin() {
+      const baseUrl = document.getElementById("base_url").value;
+      const mesin = document.getElementById("mesin").value;
+      const start = document.getElementById("start_time").value; // e.g., "2023-10-26T10:00"
+      const end = document.getElementById("end_time").value;     // e.g., "2023-10-26T11:00"
+
+      if (!mesin) { alert("Pilih mesin dulu!"); return; }
+      if (!start || !end) { alert("Isi waktu mulai dan selesai dulu!"); return; }
+
+      // datetime-local akan memberikan format "YYYY-MM-DDTHH:MM"
+      // Flask mengharapkan "YYYY-MM-DD HH:MM:SS". Tambahkan ":00" untuk detik.
+      const formattedStart = start.replace("T", " ") + ":00";
+      const formattedEnd = end.replace("T", " ") + ":00";
+
+      if (!confirm(`Yakin mau hapus data absensi mesin "${mesin}" dari ${formattedStart} sampai ${formattedEnd}?`)) return;
+
+      try {
+        const resp = await fetch(`${baseUrl}/hapus_absensi`, {
+          method: "POST", // Pastikan endpoint Flask menangani POST untuk ini
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mesin: mesin,
+            start_time: formattedStart,
+            end_time: formattedEnd
+          })
+        });
+        const text = await resp.text();
+        alert(text);
+      } catch (e) {
+        alert("Gagal menghapus data absensi mesin ini: " + e);
+      }
+    }
+
+    // Fungsi Logout - sekarang menggunakan 'auth' dan 'signOut' yang diimpor
+    window.logout = async () => {
+      try {
+        // Pastikan 'auth' dan 'signOut' telah didefinisikan dan diinisialisasi oleh Firebase SDK
+        if (!auth || typeof signOut !== 'function') {
+            console.error("Firebase Auth atau fungsi signOut tidak diimpor atau diinisialisasi dengan benar.");
+            alert("Terjadi kesalahan saat logout. Coba lagi.");
+            return;
+        }
+        await signOut(auth); // Menggunakan instance auth yang diimpor
+        localStorage.removeItem("loginTime"); // Hapus status login yang mungkin disimpan
+        window.location.href = "index.html"; // Redirect ke halaman login/awal
+      } catch (e) {
+        alert("Logout gagal: " + (e.message || e));
+        console.error("Logout error:", e); // Log error lebih detail untuk debugging
+      }
+    };
+  </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
