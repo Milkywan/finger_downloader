@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<script type="module">
+ import { auth } from "./firebase-config.js";
+ import { signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Download Absensi Mesin</title>
@@ -250,6 +253,7 @@ async function hapusSatuMesin() {
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 </body>
 </html>
+
 
 
 
