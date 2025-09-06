@@ -25,20 +25,19 @@
     color: white; text-decoration: none; margin-left: 1rem; transition: color .3s;
   }
   nav .menu a:hover, nav .menu a.active { color: #a5b4fc; }
-  /* Nav .menu2 a rule was redundant, 'menu2' is for the div, not an 'a' tag within it */
   nav .menu2 {
-    color: white; /* Text color for the logout div */
-    cursor: pointer; /* Indicate it's clickable */
-    margin-left: 1rem; /* Spacing */
-    padding: 0.5rem 1rem; /* Add some padding for better click area */
-    border-radius: 0.5rem; /* Rounded corners */
-    background: rgba(255,255,255,0.1); /* Subtle background */
-    transition: background 0.3s, transform 0.2s; /* Smooth transitions */
-    font-weight: bold; /* Make it stand out */
+    color: white;
+    cursor: pointer;
+    margin-left: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    background: rgba(255,255,255,0.1);
+    transition: background 0.3s, transform 0.2s;
+    font-weight: bold;
   }
   nav .menu2:hover {
-    background: rgba(255,255,255,0.2); /* Slightly darker on hover */
-    transform: translateY(-2px); /* Slight lift on hover */
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
   }
   .container {
     flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem;
@@ -92,7 +91,7 @@
       <a href="convert-csv.html">Absensi → CSV/TXT</a>
       <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
     </div>
-    <div class="menu2" onclick="window.logout()">Logout</div>
+    <div class="menu2" onclick="window.logout()">🚪 Logout</div>
    </nav>
   <div class="container">
     <div class="card">
@@ -127,6 +126,32 @@
     let mesinList = {};
     let expiryDate = new Date("2025-12-15T00:00:00");
 
+    // --- FITUR LOGOUT OTOMATIS KARENA TIDAK AKTIF ---
+    let inactivityTimeout;
+    const LOGOUT_TIME_LIMIT = 10 * 60 * 1000; // 10 menit dalam milidetik (10 menit * 60 detik * 1000 milidetik)
+
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimeout); // Hapus timer yang sedang berjalan
+        inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT); // Set timer baru
+    }
+
+    function triggerLogout() {
+        alert("Anda telah tidak aktif selama 10 menit. Anda akan di-logout otomatis.");
+        window.logout(); // Panggil fungsi logout yang sudah ada
+    }
+
+    // Daftarkan event listener untuk memantau aktivitas pengguna
+    // Setiap kali ada aktivitas, timer akan direset
+    document.addEventListener('mousemove', resetInactivityTimer);
+    document.addEventListener('keydown', resetInactivityTimer);
+    document.addEventListener('click', resetInactivityTimer);
+    document.addEventListener('touchstart', resetInactivityTimer); // Untuk perangkat sentuh
+
+    // Mulai timer saat halaman dimuat
+    resetInactivityTimer();
+    // --- AKHIR FITUR LOGOUT OTOMATIS ---
+
+
     function checkExpiry() {
       if (new Date() >= expiryDate) {
         alert("404 Error Networking!! XpDt");
@@ -153,13 +178,11 @@
     // Load dari mesin.json (default, kalau ada server)
     async function loadMachinesDefault() {
       try {
-        const resp = await fetch('mesin.json'); // Pastikan mesin.json dapat diakses
+        const resp = await fetch('mesin.json'); 
         mesinList = await resp.json();
         isiDropdownMesin();
       } catch (e) {
         console.warn("Gagal load mesin.json (normal kalau tanpa server):", e);
-        // Opsi: Beri tahu pengguna jika daftar mesin tidak bisa dimuat
-        // alert("Gagal memuat daftar mesin. Pastikan mesin.json ada atau unggah manual.");
       }
     }
 
@@ -190,7 +213,7 @@
       const mesin = document.getElementById("mesin").value;
       const bulan = document.getElementById("bulan").value;
       if (!mesin) { alert("Pilih mesin dulu!"); return; }
-      let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`; // Asumsi endpoint ini menampilkan laporan
+      let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`; 
       if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
       openNewWindow(url);
     }
@@ -198,8 +221,6 @@
     function downloadSemuaMesin() {
       if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
-      // Untuk fungsi "download semua sekaligus" (misal: ZIP), kamu akan memanggil endpoint Flask di sini.
-      // Saat ini, ini akan membuka beberapa tab sesuai logika yang ada.
       const bulan = document.getElementById("bulan").value;
       if (!Object.keys(mesinList).length) { alert("Belum ada data mesin!"); return; }
       Object.keys(mesinList).forEach(m => {
@@ -210,12 +231,13 @@
     }
 
     async function hapusSemuaMesin() {
+      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       if (!confirm("⚠️ Yakin mau hapus data absensi SEMUA mesin?")) return;
 
       try {
         const resp = await fetch(`${baseUrl}/hapus_absensi_semua`, {
-          method: "DELETE" // Pastikan Flask memiliki endpoint DELETE ini
+          method: "DELETE" 
         });
         const text = await resp.text();
         alert(text);
@@ -225,16 +247,15 @@
     }
 
     async function hapusSatuMesin() {
+      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       const mesin = document.getElementById("mesin").value;
-      const start = document.getElementById("start_time").value; // e.g., "2023-10-26T10:00"
-      const end = document.getElementById("end_time").value;     // e.g., "2023-10-26T11:00"
+      const start = document.getElementById("start_time").value; 
+      const end = document.getElementById("end_time").value;     
 
       if (!mesin) { alert("Pilih mesin dulu!"); return; }
       if (!start || !end) { alert("Isi waktu mulai dan selesai dulu!"); return; }
 
-      // datetime-local akan memberikan format "YYYY-MM-DDTHH:MM"
-      // Flask mengharapkan "YYYY-MM-DD HH:MM:SS". Tambahkan ":00" untuk detik.
       const formattedStart = start.replace("T", " ") + ":00";
       const formattedEnd = end.replace("T", " ") + ":00";
 
@@ -242,7 +263,7 @@
 
       try {
         const resp = await fetch(`${baseUrl}/hapus_absensi`, {
-          method: "POST", // Pastikan endpoint Flask menangani POST untuk ini
+          method: "POST", 
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mesin: mesin,
@@ -260,21 +281,21 @@
     // Fungsi Logout - sekarang menggunakan 'auth' dan 'signOut' yang diimpor
     window.logout = async () => {
       try {
-        // Pastikan 'auth' dan 'signOut' telah didefinisikan dan diinisialisasi oleh Firebase SDK
         if (!auth || typeof signOut !== 'function') {
             console.error("Firebase Auth atau fungsi signOut tidak diimpor atau diinisialisasi dengan benar.");
             alert("Terjadi kesalahan saat logout. Coba lagi.");
             return;
         }
-        await signOut(auth); // Menggunakan instance auth yang diimpor
-        localStorage.removeItem("loginTime"); // Hapus status login yang mungkin disimpan
-        window.location.href = "index.html"; // Redirect ke halaman login/awal
+        await signOut(auth); 
+        localStorage.removeItem("loginTime"); 
+        // Hentikan timer inaktivitas saat logout untuk mencegah pemicuan tak terduga
+        clearTimeout(inactivityTimeout);
+        window.location.href = "index.html"; 
       } catch (e) {
         alert("Logout gagal: " + (e.message || e));
-        console.error("Logout error:", e); // Log error lebih detail untuk debugging
+        console.error("Logout error:", e); 
       }
     };
   </script>
 </body>
 </html>
-
