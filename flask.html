@@ -25,6 +25,10 @@
     color: white; text-decoration: none; margin-left: 1rem; transition: color .3s;
   }
   nav .menu a:hover, nav .menu a.active { color: #a5b4fc; }
+  nav .menu2 a {
+    color: white; text-decoration: none; margin-left: 1rem; transition: color .3s;
+  }
+  nav .menu2 a:hover, nav .menu a.active { color: #a5b4fc; }
   .container {
     flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem;
   }
@@ -213,7 +217,9 @@ function logout() {
       <a href="excel_to_json.html">Mesin → JSON</a>
       <a href="convert-csv.html">Absensi → CSV/TXT</a>
       <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
-      <div class="menu-card" onclick="logout()">🚪 Logout</div>
+    </div>
+    <div class="menu2">
+      <a href="index.html">Logout</a>
     </div>
   </nav>
   <div class="container">
@@ -240,5 +246,6 @@ function logout() {
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 </body>
 </html>
+
 
 
