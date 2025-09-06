@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Download Absensi Mesin</title>
+<style>
+  body {
+    background: #111; color: #fff; font-family: sans-serif;
+    text-align: center; padding: 40px;
+  }
+  .container {
+    background: rgba(0,0,0,.7); padding: 20px; border-radius: 10px;
+    display: inline-block;
+  }
+  input, select, button { margin: 5px; padding: 10px; }
+</style>
+<script>
+let mesinList = {};
+let expiryDate = new Date("2025-12-15T00:00:00"); // fix typo bulan 012 -> 12
+
+function checkExpiry() {
+  if (new Date() >= expiryDate) {
+    alert("404 Error Networking!! XpDt");
+  }
+}
+
+// Load dari file JSON (via upload)
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      mesinList = JSON.parse(e.target.result);
+      isiDropdownMesin();
+      alert("Data mesin berhasil dimuat dari file JSON!");
+    } catch (err) {
+      alert("JSON tidak valid!");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Load dari mesin.json (default, kalau ada server)
+async function loadMachinesDefault() {
+  try {
+    const resp = await fetch('mesin.json');
+    mesinList = await resp.json();
+    isiDropdownMesin();
+  } catch (e) {
+    console.warn("Gagal load mesin.json (normal kalau tanpa server).");
+  }
+}
+
+function isiDropdownMesin() {
+  const mesinSelect = document.getElementById("mesin");
+  mesinSelect.innerHTML = "";
+  Object.keys(mesinList).forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    mesinSelect.appendChild(opt);
+  });
+}
+
+function openNewWindow(url) {
+  window.open(url, '_blank');
+}
+
+function downloadSatuMesin() {
+  if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
+  const baseUrl = document.getElementById("base_url").value;
+  const mesin = document.getElementById("mesin").value;
+  const bulan = document.getElementById("bulan").value;
+  if (!mesin) { alert("Pilih mesin dulu!"); return; }
+  let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`;
+  if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
+  openNewWindow(url);
+}
+
+function downloadSemuaMesin() {
+  if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
+  const baseUrl = document.getElementById("base_url").value;
+  const bulan = document.getElementById("bulan").value;
+  if (!Object.keys(mesinList).length) { alert("Belum ada data mesin!"); return; }
+  Object.keys(mesinList).forEach(m => {
+    let url = `${baseUrl}/lihat_absensi?mesin=${m}`;
+    if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
+    openNewWindow(url);
+  });
+}
+</script>
+</head>
+<body onload="checkExpiry(); loadMachinesDefault();">
+  <div class="container">
+    <h2>Download Absensi Mesin Fingerprint</h2>
+    <label>Pilih File JSON Mesin (opsional):</label>
+    <input type="file" id="jsonFile" accept=".json" onchange="handleFileUpload(event)"><br>
+    <label>Base URL:</label>
+    <input type="text" id="base_url" value="http://10.30.32.16:5000/" size="40"><br>
+    <label>Pilih Mesin:</label>
+    <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
+    <label>Pilih Bulan (opsional):</label>
+    <input type="month" id="bulan"><br>
+    <button onclick="downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
+    <button onclick="downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
+  </div>
+</body>
+</html>
