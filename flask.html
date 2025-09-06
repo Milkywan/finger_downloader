@@ -203,8 +203,15 @@ async function hapusSatuMesin() {
     alert("Gagal menghapus data absensi mesin ini: " + e);
   }
 }
-function logout() {
-  window.location.href = 'index.html';
+ window.logout = async () => {
+      try {
+        await signOut(auth);
+        localStorage.removeItem("loginTime");
+        window.location.href = "index.html";
+      } catch (e) {
+        alert("Logout gagal: " + (e.message || e));
+      }
+    };
 }
 </script>
 </head>
@@ -246,6 +253,7 @@ function logout() {
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 </body>
 </html>
+
 
 
 
