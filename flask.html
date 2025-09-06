@@ -199,7 +199,9 @@ async function hapusSatuMesin() {
     alert("Gagal menghapus data absensi mesin ini: " + e);
   }
 }
-
+function logout() {
+  window.location.href = 'index.html';
+}
 </script>
 </head>
 <body onload="checkExpiry(); loadMachinesDefault();">
@@ -238,4 +240,5 @@ async function hapusSatuMesin() {
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 </body>
 </html>
+
 
