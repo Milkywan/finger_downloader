@@ -2,21 +2,73 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Download Absensi Mesin</title>
 <style>
+  * { box-sizing: border-box; }
   body {
-    background: #111; color: #fff; font-family: sans-serif;
-    text-align: center; padding: 40px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #4f46e5, #9333ea);
+    color: white;
+    margin: 0; padding: 0;
+    display: flex; flex-direction: column;
+    min-height: 100vh;
   }
+  nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+  }
+  nav .brand { font-weight: bold; font-size: 1.2rem; }
+  nav .menu a {
+    color: white; text-decoration: none; margin-left: 1rem; transition: color .3s;
+  }
+  nav .menu a:hover, nav .menu a.active { color: #a5b4fc; }
   .container {
-    background: rgba(0,0,0,.7); padding: 20px; border-radius: 10px;
-    display: inline-block;
+    flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem;
   }
-  input, select, button { margin: 5px; padding: 10px; }
+  .card {
+    background: rgba(255,255,255,0.1);
+    padding: 2rem;
+    border-radius: 1rem;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    backdrop-filter: blur(8px);
+    animation: fadeIn .8s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  h2 { text-align: center; margin-top: 0; }
+  input, select {
+    width: 100%; padding: .75rem; margin-top: .5rem;
+    border-radius: .5rem; border: none;
+    background: rgba(255,255,255,0.15); color: #333;
+  }
+  input[type="file"] { background: none; color: #ddd; }
+  button {
+    width: 100%; padding: .75rem; margin-top: .75rem;
+    border: none; border-radius: .5rem;
+    font-weight: bold; cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+  }
+  button.green { background: #10b981; color: white; }
+  button.blue { background: #3b82f6; color: white; }
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  }
+  footer {
+    text-align: center; padding: 1rem; font-size: .9rem;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(8px);
+  }
+  footer a { color: white; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
 </style>
 <script>
 let mesinList = {};
-let expiryDate = new Date("2025-12-15T00:00:00"); // fix typo bulan 012 -> 12
+let expiryDate = new Date("2025-12-15T00:00:00");
 
 function checkExpiry() {
   if (new Date() >= expiryDate) {
@@ -92,18 +144,33 @@ function downloadSemuaMesin() {
 </script>
 </head>
 <body onload="checkExpiry(); loadMachinesDefault();">
+  <nav>
+    <div class="brand">🦁 Internal Tools</div>
+    <div class="menu">
+      <a href="home.html">Home</a>
+      <a href="#" class="active">Download Mesin</a>
+      <a href="excel_to_json.html">Mesin → JSON</a>
+      <a href="convert-csv.html">Absensi → CSV/TXT</a>
+      <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
+    </div>
+  </nav>
   <div class="container">
-    <h2>Download Absensi Mesin Fingerprint</h2>
-    <label>Pilih File JSON Mesin (opsional):</label>
-    <input type="file" id="jsonFile" accept=".json" onchange="handleFileUpload(event)"><br>
-    <label>Base URL:</label>
-    <input type="text" id="base_url" value="http://10.30.32.16:5000/" size="40"><br>
-    <label>Pilih Mesin:</label>
-    <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
-    <label>Pilih Bulan (opsional):</label>
-    <input type="month" id="bulan"><br>
-    <button onclick="downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
-    <button onclick="downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
+    <div class="card">
+      <h2>Download Absensi Mesin Fingerprint</h2>
+      <label>Pilih File JSON Mesin (opsional):</label>
+      <input type="file" id="jsonFile" accept=".json" onchange="handleFileUpload(event)"><br>
+      <label>Base URL:</label>
+      <input type="text" id="base_url" value="http://10.30.32.16:5000/"><br>
+      <label>Pilih Mesin:</label>
+      <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
+      <label>Pilih Bulan (opsional):</label>
+      <input type="month" id="bulan"><br>
+      <button class="green" onclick="downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
+      <button class="blue" onclick="downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
+    </div>
   </div>
+  <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 </body>
 </html>
+
+
