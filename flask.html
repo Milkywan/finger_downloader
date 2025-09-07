@@ -102,8 +102,15 @@
       <input type="text" id="base_url" value="http://10.30.32.16:5000/"><br>
       <label>Pilih Mesin:</label>
       <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
+
       <button class="green" onclick="window.downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
       <button class="blue" onclick="window.downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
+
+      <!-- Tombol Hapus (hapusSatuMesin dan hapusSemuaMesin) telah dihapus dari sini -->
+      <!-- karena input waktu/bulan sudah dihapus, dan fungsi aslinya memerlukannya. -->
+      <!-- Jika Anda ingin tombol hapus yang menghapus SEMUA data dari mesin, -->
+      <!-- perlu ada endpoint Flask baru dan penyesuaian JavaScript. -->
+
     </div>
   </div>
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
@@ -116,42 +123,37 @@
 
 
     let mesinList = {};
-    let expiryDate = new Date("2025-12-15T00:00:00");
+    let expiryDate = new Date("2025-12-31T00:00:00");
 
     // --- FITUR LOGOUT OTOMATIS KARENA TIDAK AKTIF ---
     let inactivityTimeout;
     const LOGOUT_TIME_LIMIT = 10 * 60 * 1000; // 10 menit dalam milidetik (10 menit * 60 detik * 1000 milidetik)
 
-    function triggerLogout() { // Tidak perlu window. di sini karena dipanggil dari dalam
+    function triggerLogout() {
         alert("Anda telah tidak aktif selama 10 menit. Anda akan di-logout otomatis.");
         window.logout(); 
     }
     
-    // Fungsi ini perlu di-expose agar event listener bisa diatur di global scope (document)
     window.resetInactivityTimer = function() {
         clearTimeout(inactivityTimeout);
         inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT);
     };
 
-    // Daftarkan event listener untuk memantau aktivitas pengguna
     document.addEventListener('mousemove', window.resetInactivityTimer);
     document.addEventListener('keydown', window.resetInactivityTimer);
     document.addEventListener('click', window.resetInactivityTimer);
     document.addEventListener('touchstart', window.resetInactivityTimer); 
 
-    // Mulai timer saat halaman dimuat
     window.resetInactivityTimer();
     // --- AKHIR FITUR LOGOUT OTOMATIS ---
 
 
-    // Fungsi ini perlu di-expose karena dipanggil dari onload
     window.checkExpiry = function() {
       if (new Date() >= expiryDate) {
         alert("404 Error Networking!! XpDt");
       }
     };
 
-    // Fungsi ini perlu di-expose karena dipanggil dari onchange
     window.handleFileUpload = function(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -159,7 +161,7 @@
       reader.onload = function(e) {
         try {
           mesinList = JSON.parse(e.target.result);
-          window.isiDropdownMesin(); // Panggil versi global
+          window.isiDropdownMesin();
           alert("Data mesin berhasil dimuat dari file JSON!");
         } catch (err) {
           alert("JSON tidak valid!");
@@ -168,18 +170,16 @@
       reader.readAsText(file);
     };
 
-    // Fungsi ini perlu di-expose karena dipanggil dari onload
     window.loadMachinesDefault = async function() {
       try {
         const resp = await fetch('mesin.json'); 
         mesinList = await resp.json();
-        window.isiDropdownMesin(); // Panggil versi global
+        window.isiDropdownMesin();
       } catch (e) {
         console.warn("Gagal load mesin.json (normal kalau tanpa server):", e);
       }
     };
 
-    // Fungsi ini perlu di-expose karena dipanggil dari handleFileUpload dan loadMachinesDefault
     window.isiDropdownMesin = function() {
       const mesinSelect = document.getElementById("mesin");
       mesinSelect.innerHTML = "";
@@ -197,36 +197,38 @@
       }
     };
 
-    // Fungsi ini perlu di-expose karena dipanggil dari downloadSatuMesin dan downloadSemuaMesin
     window.openNewWindow = function(url) {
       window.open(url, '_blank');
     };
 
-    // Fungsi ini perlu di-expose karena dipanggil dari onclick
+    // Fungsi downloadSatuMesin disesuaikan: tidak ada lagi parameter 'bulan'
     window.downloadSatuMesin = function() {
       if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       const mesin = document.getElementById("mesin").value;
-      const bulan = document.getElementById("bulan").value;
       if (!mesin) { alert("Pilih mesin dulu!"); return; }
+      // URL Flask tidak lagi menyertakan parameter 'bulan'
       let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`; 
-      if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
-      window.openNewWindow(url); // Panggil versi global
+      window.openNewWindow(url);
     };
 
-    // Fungsi ini perlu di-expose karena dipanggil dari onclick
+    // Fungsi downloadSemuaMesin disesuaikan: tidak ada lagi parameter 'bulan'
     window.downloadSemuaMesin = function() {
       if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
-      const bulan = document.getElementById("bulan").value;
       if (!Object.keys(mesinList).length) { alert("Belum ada data mesin!"); return; }
       Object.keys(mesinList).forEach(m => {
+        // URL Flask tidak lagi menyertakan parameter 'bulan'
         let url = `${baseUrl}/lihat_absensi?mesin=${m}`;
-        if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
-        window.openNewWindow(url); // Panggil versi global
+        window.openNewWindow(url);
       });
     };
-    // Fungsi Logout - sudah window.logout
+
+    // Fungsi hapusSatuMesin dan hapusSemuaMesin telah dihapus dari sini,
+    // karena input 'start_time' dan 'end_time' sudah tidak ada.
+    // Jika Anda ingin fungsionalitas hapus data, perlu dibuat logika baru
+    // yang tidak bergantung pada rentang waktu.
+
     window.logout = async () => {
       try {
         if (!auth || typeof signOut !== 'function') {
@@ -246,5 +248,3 @@
   </script>
 </body>
 </html>
-
-
