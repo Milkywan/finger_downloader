@@ -81,7 +81,7 @@
   footer a:hover { text-decoration: underline; }
 </style>
 </head>
-<body onload="checkExpiry(); loadMachinesDefault();">
+<body onload="window.checkExpiry(); window.loadMachinesDefault();">
   <nav>
     <div class="brand">🦁 Internal Tools</div>
     <div class="menu">
@@ -91,13 +91,13 @@
       <a href="convert-csv.html">Absensi → CSV/TXT</a>
       <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
     </div>
-    <div class="menu2" onclick="window.logout()">🚪 Logout</div>
+    <div class="menu2" onclick="window.logout()">Logout</div>
    </nav>
   <div class="container">
     <div class="card">
       <h2>Download Absensi Mesin Fingerprint</h2>
       <label>Pilih File JSON Mesin (opsional):</label>
-      <input type="file" id="jsonFile" accept=".json" onchange="handleFileUpload(event)"><br>
+      <input type="file" id="jsonFile" accept=".json" onchange="window.handleFileUpload(event)"><br>
       <label>Base URL:</label>
       <input type="text" id="base_url" value="http://10.30.32.16:5000/"><br>
       <label>Pilih Mesin:</label>
@@ -108,10 +108,10 @@
       <input type="datetime-local" id="start_time"><br>
       <label>Waktu Selesai:</label>
       <input type="datetime-local" id="end_time"><br>
-      <button class="green" onclick="downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
-      <button class="blue" onclick="downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
-      <button class="green" onclick="hapusSatuMesin()">🗑️ Hapus Data Mesin Terpilih</button>
-      <button class="blue" onclick="hapusSemuaMesin()">🗑️ Hapus Semua Data Mesin</button>
+      <button class="green" onclick="window.downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
+      <button class="blue" onclick="window.downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
+      <button class="green" onclick="window.hapusSatuMesin()">🗑️ Hapus Data Mesin Terpilih</button>
+      <button class="blue" onclick="window.hapusSemuaMesin()">🗑️ Hapus Semua Data Mesin</button>
     </div>
   </div>
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
@@ -130,63 +130,65 @@
     let inactivityTimeout;
     const LOGOUT_TIME_LIMIT = 10 * 60 * 1000; // 10 menit dalam milidetik (10 menit * 60 detik * 1000 milidetik)
 
-    function resetInactivityTimer() {
-        clearTimeout(inactivityTimeout); // Hapus timer yang sedang berjalan
-        inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT); // Set timer baru
-    }
-
-    function triggerLogout() {
+    function triggerLogout() { // Tidak perlu window. di sini karena dipanggil dari dalam
         alert("Anda telah tidak aktif selama 10 menit. Anda akan di-logout otomatis.");
-        window.logout(); // Panggil fungsi logout yang sudah ada
+        window.logout(); 
     }
+    
+    // Fungsi ini perlu di-expose agar event listener bisa diatur di global scope (document)
+    window.resetInactivityTimer = function() {
+        clearTimeout(inactivityTimeout);
+        inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT);
+    };
 
     // Daftarkan event listener untuk memantau aktivitas pengguna
-    // Setiap kali ada aktivitas, timer akan direset
-    document.addEventListener('mousemove', resetInactivityTimer);
-    document.addEventListener('keydown', resetInactivityTimer);
-    document.addEventListener('click', resetInactivityTimer);
-    document.addEventListener('touchstart', resetInactivityTimer); // Untuk perangkat sentuh
+    document.addEventListener('mousemove', window.resetInactivityTimer);
+    document.addEventListener('keydown', window.resetInactivityTimer);
+    document.addEventListener('click', window.resetInactivityTimer);
+    document.addEventListener('touchstart', window.resetInactivityTimer); 
 
     // Mulai timer saat halaman dimuat
-    resetInactivityTimer();
+    window.resetInactivityTimer();
     // --- AKHIR FITUR LOGOUT OTOMATIS ---
 
 
-    function checkExpiry() {
+    // Fungsi ini perlu di-expose karena dipanggil dari onload
+    window.checkExpiry = function() {
       if (new Date() >= expiryDate) {
         alert("404 Error Networking!! XpDt");
       }
-    }
+    };
 
-    // Load dari file JSON (via upload)
-    function handleFileUpload(event) {
+    // Fungsi ini perlu di-expose karena dipanggil dari onchange
+    window.handleFileUpload = function(event) {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
           mesinList = JSON.parse(e.target.result);
-          isiDropdownMesin();
+          window.isiDropdownMesin(); // Panggil versi global
           alert("Data mesin berhasil dimuat dari file JSON!");
         } catch (err) {
           alert("JSON tidak valid!");
         }
       };
       reader.readAsText(file);
-    }
+    };
 
-    // Load dari mesin.json (default, kalau ada server)
-    async function loadMachinesDefault() {
+    // Fungsi ini perlu di-expose karena dipanggil dari onload
+    window.loadMachinesDefault = async function() {
       try {
         const resp = await fetch('mesin.json'); 
         mesinList = await resp.json();
-        isiDropdownMesin();
+        window.isiDropdownMesin(); // Panggil versi global
       } catch (e) {
         console.warn("Gagal load mesin.json (normal kalau tanpa server):", e);
       }
-    }
+    };
 
-    function isiDropdownMesin() {
+    // Fungsi ini perlu di-expose karena dipanggil dari handleFileUpload dan loadMachinesDefault
+    window.isiDropdownMesin = function() {
       const mesinSelect = document.getElementById("mesin");
       mesinSelect.innerHTML = "";
       Object.keys(mesinList).forEach(m => {
@@ -201,13 +203,15 @@
         opt.textContent = "-- Belum ada data --";
         mesinSelect.appendChild(opt);
       }
-    }
+    };
 
-    function openNewWindow(url) {
+    // Fungsi ini perlu di-expose karena dipanggil dari downloadSatuMesin dan downloadSemuaMesin
+    window.openNewWindow = function(url) {
       window.open(url, '_blank');
-    }
+    };
 
-    function downloadSatuMesin() {
+    // Fungsi ini perlu di-expose karena dipanggil dari onclick
+    window.downloadSatuMesin = function() {
       if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       const mesin = document.getElementById("mesin").value;
@@ -215,10 +219,11 @@
       if (!mesin) { alert("Pilih mesin dulu!"); return; }
       let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`; 
       if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
-      openNewWindow(url);
-    }
+      window.openNewWindow(url); // Panggil versi global
+    };
 
-    function downloadSemuaMesin() {
+    // Fungsi ini perlu di-expose karena dipanggil dari onclick
+    window.downloadSemuaMesin = function() {
       if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       const bulan = document.getElementById("bulan").value;
@@ -226,11 +231,12 @@
       Object.keys(mesinList).forEach(m => {
         let url = `${baseUrl}/lihat_absensi?mesin=${m}`;
         if (bulan) url += `&bulan=${encodeURIComponent(bulan)}`;
-        openNewWindow(url);
+        window.openNewWindow(url); // Panggil versi global
       });
-    }
+    };
 
-    async function hapusSemuaMesin() {
+    // Fungsi ini perlu di-expose karena dipanggil dari onclick
+    window.hapusSemuaMesin = async function() {
       if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       if (!confirm("⚠️ Yakin mau hapus data absensi SEMUA mesin?")) return;
@@ -244,9 +250,10 @@
       } catch (e) {
         alert("Gagal menghapus data absensi semua mesin: " + e);
       }
-    }
+    };
 
-    async function hapusSatuMesin() {
+    // Fungsi ini perlu di-expose karena dipanggil dari onclick
+    window.hapusSatuMesin = async function() {
       if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       const mesin = document.getElementById("mesin").value;
@@ -276,9 +283,9 @@
       } catch (e) {
         alert("Gagal menghapus data absensi mesin ini: " + e);
       }
-    }
+    };
 
-    // Fungsi Logout - sekarang menggunakan 'auth' dan 'signOut' yang diimpor
+    // Fungsi Logout - sudah window.logout
     window.logout = async () => {
       try {
         if (!auth || typeof signOut !== 'function') {
@@ -288,7 +295,6 @@
         }
         await signOut(auth); 
         localStorage.removeItem("loginTime"); 
-        // Hentikan timer inaktivitas saat logout untuk mencegah pemicuan tak terduga
         clearTimeout(inactivityTimeout);
         window.location.href = "index.html"; 
       } catch (e) {
