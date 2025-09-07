@@ -226,57 +226,6 @@
         window.openNewWindow(url); // Panggil versi global
       });
     };
-
-    // Fungsi ini perlu di-expose karena dipanggil dari onclick
-    window.hapusSemuaMesin = async function() {
-      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
-      const baseUrl = document.getElementById("base_url").value;
-      if (!confirm("⚠️ Yakin mau hapus data absensi SEMUA mesin?")) return;
-
-      try {
-        const resp = await fetch(`${baseUrl}/hapus_absensi_semua`, {
-          method: "DELETE" 
-        });
-        const text = await resp.text();
-        alert(text);
-      } catch (e) {
-        alert("Gagal menghapus data absensi semua mesin: " + e);
-      }
-    };
-
-    // Fungsi ini perlu di-expose karena dipanggil dari onclick
-    window.hapusSatuMesin = async function() {
-      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
-      const baseUrl = document.getElementById("base_url").value;
-      const mesin = document.getElementById("mesin").value;
-      const start = document.getElementById("start_time").value; 
-      const end = document.getElementById("end_time").value;     
-
-      if (!mesin) { alert("Pilih mesin dulu!"); return; }
-      if (!start || !end) { alert("Isi waktu mulai dan selesai dulu!"); return; }
-
-      const formattedStart = start.replace("T", " ") + ":00";
-      const formattedEnd = end.replace("T", " ") + ":00";
-
-      if (!confirm(`Yakin mau hapus data absensi mesin "${mesin}" dari ${formattedStart} sampai ${formattedEnd}?`)) return;
-
-      try {
-        const resp = await fetch(`${baseUrl}/hapus_absensi`, {
-          method: "POST", 
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mesin: mesin,
-            start_time: formattedStart,
-            end_time: formattedEnd
-          })
-        });
-        const text = await resp.text();
-        alert(text);
-      } catch (e) {
-        alert("Gagal menghapus data absensi mesin ini: " + e);
-      }
-    };
-
     // Fungsi Logout - sudah window.logout
     window.logout = async () => {
       try {
@@ -297,4 +246,5 @@
   </script>
 </body>
 </html>
+
 
