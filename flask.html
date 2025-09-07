@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Import common-auth.js di HEAD sudah benar -->
+<script type="module" src="./common-auth.js"></script>
 <title>Download Absensi Mesin</title>
 <style>
   * { box-sizing: border-box; }
@@ -81,7 +83,8 @@
   footer a:hover { text-decoration: underline; }
 </style>
 </head>
-<body onload="window.checkExpiry(); window.loadMachinesDefault();">
+<!-- Hapus atribut onload dari body karena akan dipanggil via DOMContentLoaded di common-auth.js -->
+<body>
   <nav>
     <div class="brand">🦁 Internal Tools</div>
     <div class="menu">
@@ -105,54 +108,26 @@
 
       <button class="green" onclick="window.downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
       <button class="blue" onclick="window.downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
-
-      <!-- Tombol Hapus (hapusSatuMesin dan hapusSemuaMesin) telah dihapus dari sini -->
-      <!-- karena input waktu/bulan sudah dihapus, dan fungsi aslinya memerlukannya. -->
-      <!-- Jika Anda ingin tombol hapus yang menghapus SEMUA data dari mesin, -->
-      <!-- perlu ada endpoint Flask baru dan penyesuaian JavaScript. -->
-
     </div>
   </div>
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 
   <script type="module">
-    // Import auth from your separate firebase-config.js file
-    import { auth } from './firebase-config.js'; 
-    // Import signOut directly from the Firebase Auth module
-    import { signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+    // Hapus semua impor auth dan signOut karena sudah di common-auth.js
 
-
+    // mesinList harus tetap di sini karena ini adalah data spesifik untuk halaman ini
     let mesinList = {};
-    let expiryDate = new Date("2025-12-31T00:00:00");
+    // Hapus deklarasi expiryDate, gunakan EXPIRY_DATE dari common-auth.js
 
-    // --- FITUR LOGOUT OTOMATIS KARENA TIDAK AKTIF ---
-    let inactivityTimeout;
-    const LOGOUT_TIME_LIMIT = 10 * 60 * 1000; // 10 menit dalam milidetik (10 menit * 60 detik * 1000 milidetik)
+    // --- Inisialisasi spesifik untuk halaman flask.html ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // Panggil loadMachinesDefault di sini, bukan di body onload
+      window.loadMachinesDefault();
+    });
+    // --- AKHIR Inisialisasi spesifik ---
 
-    function triggerLogout() {
-        alert("Anda telah tidak aktif selama 10 menit. Anda akan di-logout otomatis.");
-        window.logout(); 
-    }
-    
-    window.resetInactivityTimer = function() {
-        clearTimeout(inactivityTimeout);
-        inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT);
-    };
-
-    document.addEventListener('mousemove', window.resetInactivityTimer);
-    document.addEventListener('keydown', window.resetInactivityTimer);
-    document.addEventListener('click', window.resetInactivityTimer);
-    document.addEventListener('touchstart', window.resetInactivityTimer); 
-
-    window.resetInactivityTimer();
-    // --- AKHIR FITUR LOGOUT OTOMATIS ---
-
-
-    window.checkExpiry = function() {
-      if (new Date() >= expiryDate) {
-        alert("404 Error Networking!! XpDt");
-      }
-    };
+    // Semua fungsi di bawah ini perlu di-expose ke window
+    // Karena dipanggil dari atribut onclick/onchange di HTML
 
     window.handleFileUpload = function(event) {
       const file = event.target.files[0];
@@ -172,7 +147,7 @@
 
     window.loadMachinesDefault = async function() {
       try {
-        const resp = await fetch('mesin.json'); 
+        const resp = await fetch('mesin.json');
         mesinList = await resp.json();
         window.isiDropdownMesin();
       } catch (e) {
@@ -201,50 +176,27 @@
       window.open(url, '_blank');
     };
 
-    // Fungsi downloadSatuMesin disesuaikan: tidak ada lagi parameter 'bulan'
     window.downloadSatuMesin = function() {
-      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
+      // Gunakan EXPIRY_DATE dari common-auth.js
+      if (new Date() >= EXPIRY_DATE) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       const mesin = document.getElementById("mesin").value;
       if (!mesin) { alert("Pilih mesin dulu!"); return; }
-      // URL Flask tidak lagi menyertakan parameter 'bulan'
-      let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`; 
+      let url = `${baseUrl}/lihat_absensi?mesin=${mesin}`;
       window.openNewWindow(url);
     };
 
-    // Fungsi downloadSemuaMesin disesuaikan: tidak ada lagi parameter 'bulan'
     window.downloadSemuaMesin = function() {
-      if (new Date() >= expiryDate) { alert("404 Error Networking!! XpDt"); return; }
+      // Gunakan EXPIRY_DATE dari common-auth.js
+      if (new Date() >= EXPIRY_DATE) { alert("404 Error Networking!! XpDt"); return; }
       const baseUrl = document.getElementById("base_url").value;
       if (!Object.keys(mesinList).length) { alert("Belum ada data mesin!"); return; }
       Object.keys(mesinList).forEach(m => {
-        // URL Flask tidak lagi menyertakan parameter 'bulan'
         let url = `${baseUrl}/lihat_absensi?mesin=${m}`;
         window.openNewWindow(url);
       });
     };
-
-    // Fungsi hapusSatuMesin dan hapusSemuaMesin telah dihapus dari sini,
-    // karena input 'start_time' dan 'end_time' sudah tidak ada.
-    // Jika Anda ingin fungsionalitas hapus data, perlu dibuat logika baru
-    // yang tidak bergantung pada rentang waktu.
-
-    window.logout = async () => {
-      try {
-        if (!auth || typeof signOut !== 'function') {
-            console.error("Firebase Auth atau fungsi signOut tidak diimpor atau diinisialisasi dengan benar.");
-            alert("Terjadi kesalahan saat logout. Coba lagi.");
-            return;
-        }
-        await signOut(auth); 
-        localStorage.removeItem("loginTime"); 
-        clearTimeout(inactivityTimeout);
-        window.location.href = "index.html"; 
-      } catch (e) {
-        alert("Logout gagal: " + (e.message || e));
-        console.error("Logout error:", e); 
-      }
-    };
+    // Hapus semua kode duplikasi lainnya (logout, inactivity timer) karena sudah di common-auth.js
   </script>
 </body>
 </html>
