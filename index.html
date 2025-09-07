@@ -145,6 +145,20 @@ window.showLogin = () => {
     document.getElementById("registerForm").classList.add("hidden");
     document.getElementById("loginForm").classList.remove("hidden");
 };
+// --- BAGIAN BARU YANG PERLU DITAMBAHKAN ---
+// Dapatkan referensi ke elemen input password dan tombol login
+const loginPasswordInput = document.getElementById("login-password");
+const loginBtn = document.getElementById("loginBtn"); // Sudah ada sebelumnya, tapi didefinisikan di sini untuk kejelasan
+
+// Tambahkan event listener ke input password
+loginPasswordInput.addEventListener("keydown", (event) => {
+    // Cek apakah tombol yang ditekan adalah "Enter"
+    if (event.key === "Enter") {
+        event.preventDefault(); // Mencegah form untuk submit default (jika ada)
+        loginBtn.click(); // Memicu klik pada tombol login
+    }
+});
+// --- AKHIR BAGIAN BARU YANG DITAMBAHKAN ---
 
 // Login
 loginBtn.addEventListener("click", async () => {
@@ -218,6 +232,7 @@ forgotPasswordBtn.addEventListener("click", async () => {
 <script type="module" src="analytics.js"></script>
 </body>
 </html>
+
 
 
 
