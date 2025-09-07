@@ -82,46 +82,14 @@
   footer a { color: white; text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 </style>
-</head>
-<!-- Hapus atribut onload dari body karena akan dipanggil via DOMContentLoaded di common-auth.js -->
-<body>
-  <nav>
-    <div class="brand">🦁 Internal Tools</div>
-    <div class="menu">
-      <a href="home.html">Home</a>
-      <a href="#" class="active">Download Mesin</a>
-      <a href="excel_to_json.html">Mesin → JSON</a>
-      <a href="convert-csv.html">Absensi → CSV/TXT</a>
-      <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
-    </div>
-    <div class="menu2" onclick="window.logout()">Logout</div>
-   </nav>
-  <div class="container">
-    <div class="card">
-      <h2>Download Absensi Mesin Fingerprint</h2>
-      <label>Pilih File JSON Mesin (opsional):</label>
-      <input type="file" id="jsonFile" accept=".json" onchange="window.handleFileUpload(event)"><br>
-      <label>Base URL:</label>
-      <input type="text" id="base_url" value="http://10.30.32.16:5000/"><br>
-      <label>Pilih Mesin:</label>
-      <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
-
-      <button class="green" onclick="window.downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
-      <button class="blue" onclick="window.downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
-    </div>
-  </div>
-  <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
-
-  <script type="module">
-    // Hapus semua impor auth dan signOut karena sudah di common-auth.js
-
-    // mesinList harus tetap di sini karena ini adalah data spesifik untuk halaman ini
+<!-- SKRIP INLINE SEKARANG DI HEAD -->
+<script type="module">
+    // mesinList tetap di sini karena data spesifik untuk halaman ini
     let mesinList = {};
-    // Hapus deklarasi expiryDate, gunakan EXPIRY_DATE dari common-auth.js
 
     // --- Inisialisasi spesifik untuk halaman flask.html ---
+    // Dipanggil saat seluruh DOM siap
     document.addEventListener('DOMContentLoaded', () => {
-      // Panggil loadMachinesDefault di sini, bukan di body onload
       window.loadMachinesDefault();
     });
     // --- AKHIR Inisialisasi spesifik ---
@@ -177,8 +145,9 @@
     };
 
     window.downloadSatuMesin = function() {
-      // Gunakan EXPIRY_DATE dari common-auth.js
-      if (new Date() >= EXPIRY_DATE) { alert("404 Error Networking!! XpDt"); return; }
+      // Panggil window.checkExpiry() yang ada di common-auth.js
+      if (window.checkExpiry()) { return; } // Perhatikan: checkExpiry() harus mengembalikan boolean
+
       const baseUrl = document.getElementById("base_url").value;
       const mesin = document.getElementById("mesin").value;
       if (!mesin) { alert("Pilih mesin dulu!"); return; }
@@ -187,8 +156,9 @@
     };
 
     window.downloadSemuaMesin = function() {
-      // Gunakan EXPIRY_DATE dari common-auth.js
-      if (new Date() >= EXPIRY_DATE) { alert("404 Error Networking!! XpDt"); return; }
+      // Panggil window.checkExpiry() yang ada di common-auth.js
+      if (window.checkExpiry()) { return; } // Perhatikan: checkExpiry() harus mengembalikan boolean
+
       const baseUrl = document.getElementById("base_url").value;
       if (!Object.keys(mesinList).length) { alert("Belum ada data mesin!"); return; }
       Object.keys(mesinList).forEach(m => {
@@ -196,7 +166,35 @@
         window.openNewWindow(url);
       });
     };
-    // Hapus semua kode duplikasi lainnya (logout, inactivity timer) karena sudah di common-auth.js
   </script>
+</head>
+<!-- Hapus atribut onload dari body -->
+<body>
+  <nav>
+    <div class="brand">🦁 Internal Tools</div>
+    <div class="menu">
+      <a href="home.html">Home</a>
+      <a href="#" class="active">Download Mesin</a>
+      <a href="excel_to_json.html">Mesin → JSON</a>
+      <a href="convert-csv.html">Absensi → CSV/TXT</a>
+      <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
+    </div>
+    <div class="menu2" onclick="window.logout()">Logout</div>
+   </nav>
+  <div class="container">
+    <div class="card">
+      <h2>Download Absensi Mesin Fingerprint</h2>
+      <label>Pilih File JSON Mesin (opsional):</label>
+      <input type="file" id="jsonFile" accept=".json" onchange="window.handleFileUpload(event)"><br>
+      <label>Base URL:</label>
+      <input type="text" id="base_url" value="http://10.30.32.16:5000/"><br>
+      <label>Pilih Mesin:</label>
+      <select id="mesin"><option value="">-- Belum ada data --</option></select><br>
+
+      <button class="green" onclick="window.downloadSatuMesin()">⬇️ Download Mesin Terpilih</button>
+      <button class="blue" onclick="window.downloadSemuaMesin()">⬇️ Download Semua Mesin</button>
+    </div>
+  </div>
+  <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 </body>
 </html>
