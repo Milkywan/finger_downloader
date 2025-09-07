@@ -15,7 +15,7 @@ const EXPIRY_DATE = new Date("2025-08-31T00:00:00"); // Sesuaikan tanggal ini se
 // Fungsi Pemeriksaan Expired Date
 window.checkExpiry = function() {
     if (new Date() >= EXPIRY_DATE) {
-        alert("404 Error Networking!! XpDt");
+        alert("404 Error Networking!! Expired Access Hubungi 08125331585");
         return true; // Mengembalikan true jika sudah expired
     }
     return false; // Mengembalikan false jika belum expired
