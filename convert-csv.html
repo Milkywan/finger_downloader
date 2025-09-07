@@ -242,7 +242,7 @@ window.convertAndDownload = function() {
         const [hh, mm] = timePart.split(':');
         waktu = `${d}/${m}/${y} ${hh}:${mm}`;
       }
-      status = statusMap[status] || status;
+      status = statusMap[status] || "C/Masuk";
 
       csv += `${nik},"${nama}",${waktu},${status}\n`;
     });
@@ -294,3 +294,4 @@ window.logout = async () => {
 </script>
 </body>
 </html>
+
