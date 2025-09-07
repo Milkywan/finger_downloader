@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script type="module" src="./common-auth.js"></script>
   <title>Finger Downloader — Menu Utama</title>
   <style>
     body {
@@ -66,56 +67,11 @@
   </div>
 
   <script type="module">
-    import { auth } from "./firebase-config.js";
-    import { signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-
-
-    let mesinList = {};
-    let expiryDate = new Date("2025-12-31T00:00:00");
-
-    // --- FITUR LOGOUT OTOMATIS KARENA TIDAK AKTIF ---
-    let inactivityTimeout;
-    const LOGOUT_TIME_LIMIT = 10 * 60 * 1000; // 10 menit dalam milidetik (10 menit * 60 detik * 1000 milidetik)
-
-    function triggerLogout() {
-        alert("Anda telah tidak aktif selama 10 menit. Anda akan di-logout otomatis.");
-        window.logout(); 
-    }
-    
-    window.resetInactivityTimer = function() {
-        clearTimeout(inactivityTimeout);
-        inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT);
-    };
-
-    document.addEventListener('mousemove', window.resetInactivityTimer);
-    document.addEventListener('keydown', window.resetInactivityTimer);
-    document.addEventListener('click', window.resetInactivityTimer);
-    document.addEventListener('touchstart', window.resetInactivityTimer); 
-
-    window.resetInactivityTimer();
-    // --- AKHIR FITUR LOGOUT OTOMATIS ---
-    // cek kalau belum login, balik ke login
-    if (!localStorage.getItem("loginTime")) {
-      window.location.href = "index.html";
-    }
-
-    window.goPage = (url) => {
-      window.location.href = url;
-    };
-
-    window.logout = async () => {
-      try {
-        await signOut(auth);
-        localStorage.removeItem("loginTime");
-        window.location.href = "index.html";
-      } catch (e) {
-        alert("Logout gagal: " + (e.message || e));
-      }
-    };
-    
+ 
   </script>
 </body>
 
 </html>
+
 
 
