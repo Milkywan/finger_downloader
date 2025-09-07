@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Konversi Absensi → CSV/TXT</title>
+  <!-- Load common-auth.js di HEAD sudah benar -->
+  <script type="module" src="./common-auth.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -86,7 +88,8 @@
     }
   </style>
 </head>
-<body onload="window.checkExpiry(); window.loadMachinesDefault();">
+<!-- Hapus atribut onload dari body -->
+<body>
   <nav>
     <div class="brand">🦁 Internal Tools</div>
     <div class="menu">
@@ -121,177 +124,126 @@
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 
 <script type="module">
-    // Import auth from your separate firebase-config.js file
-    import { auth } from './firebase-config.js'; 
-    // Import signOut directly from the Firebase Auth module
-    import { signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+    // Hapus semua impor Firebase karena sudah di common-auth.js
 
+    // Hapus variabel mesinList dan expiryDate karena tidak digunakan/duplikasi
+    // Hapus semua kode terkait fitur logout otomatis karena sudah di common-auth.js
+    // Hapus semua kode terkait fungsi window.logout karena sudah di common-auth.js
 
-    let mesinList = {};
-    let expiryDate = new Date("2025-12-15T00:00:00");
+    const statusMap = { "1": "C/Masuk", "2": "C/Keluar", "3": "Lembur Masuk", "4": "Lembur Keluar" };
+    const fileInput = document.getElementById('fileInput');
+    const textarea = document.getElementById('inputData');
+    const progressContainer = document.querySelector('.progress-container');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressStatus = document.querySelector('.progress-status');
 
-    // --- FITUR LOGOUT OTOMATIS KARENA TIDAK AKTIF ---
-    let inactivityTimeout;
-    const LOGOUT_TIME_LIMIT = 10 * 60 * 1000; // 10 menit dalam milidetik (10 menit * 60 detik * 1000 milidetik)
-
-    // exposed to window because it's called by resetInactivityTimer (which is window.resetInactivityTimer)
-    function triggerLogout() { 
-        alert("Anda telah tidak aktif selama 10 menit. Anda akan di-logout otomatis.");
-        window.logout(); 
+    function updateProgress(percent, text) {
+      progressContainer.style.display = 'block';
+      progressStatus.style.display = 'block';
+      progressBar.style.width = percent + '%';
+      progressStatus.textContent = text + ` (${percent}%)`;
     }
-    
-    // exposed to window because it's called by document.addEventListener
-    window.resetInactivityTimer = function() {
-        clearTimeout(inactivityTimeout);
-        inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT);
-    };
 
-    // Daftarkan event listener untuk memantau aktivitas pengguna
-    document.addEventListener('mousemove', window.resetInactivityTimer);
-    document.addEventListener('keydown', window.resetInactivityTimer);
-    document.addEventListener('click', window.resetInactivityTimer);
-    document.addEventListener('touchstart', window.resetInactivityTimer); 
-
-    // Mulai timer saat halaman dimuat
-    window.resetInactivityTimer();
-    // --- AKHIR FITUR LOGOUT OTOMATIS ---
-
-const statusMap = { "1": "C/Masuk", "2": "C/Keluar", "3": "Lembur Masuk", "4": "Lembur Keluar" };
-const fileInput = document.getElementById('fileInput');
-const textarea = document.getElementById('inputData');
-const progressContainer = document.querySelector('.progress-container');
-const progressBar = document.querySelector('.progress-bar');
-const progressStatus = document.querySelector('.progress-status');
-
-function updateProgress(percent, text) { // No need to expose this, it's called internally
-  progressContainer.style.display = 'block';
-  progressStatus.style.display = 'block';
-  progressBar.style.width = percent + '%';
-  progressStatus.textContent = text + ` (${percent}%)`;
-}
-
-// Upload file progress
-fileInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onprogress = evt => {
-    if (evt.lengthComputable) {
-      const percent = Math.round((evt.loaded / evt.total) * 100);
-      updateProgress(percent, 'Membaca file');
-    }
-  };
-  reader.onloadstart = () => updateProgress(0, 'Membaca file');
-  reader.onload = evt => {
-    textarea.value = evt.target.result;
-    updateProgress(100, 'File berhasil dibaca ✔️');
-    setTimeout(() => {
-      progressContainer.style.display = 'none';
-      progressStatus.style.display = 'none';
-    }, 1000);
-  };
-  reader.readAsText(file);
-});
-
-textarea.addEventListener('dragover', e => { e.preventDefault(); textarea.classList.add('drop-hover'); });
-textarea.addEventListener('dragleave', e => { textarea.classList.remove('drop-hover'); });
-textarea.addEventListener('drop', e => {
-  e.preventDefault(); textarea.classList.remove('drop-hover');
-  const file = e.dataTransfer.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onprogress = evt => {
-      if (evt.lengthComputable) {
-        const percent = Math.round((evt.loaded / evt.total) * 100);
-        updateProgress(percent, 'Membaca file');
-      }
-    };
-    reader.onloadstart = () => updateProgress(0, 'Membaca file');
-    reader.onload = evt => {
-      textarea.value = evt.target.result;
-      updateProgress(100, 'File berhasil dibaca ✔️');
-      setTimeout(() => {
-        progressContainer.style.display = 'none';
-        progressStatus.style.display = 'none';
-      }, 1000);
-    };
-    reader.readAsText(file);
-  }
-});
-
-// exposed to window because it's called by onclick="window.convertAndDownload()"
-window.convertAndDownload = function() {
-  const rawText = textarea.value.trim();
-  if (!rawText) { alert('Tempel atau upload data dulu ya.'); return; }
-
-  updateProgress(10, 'Memulai konversi');
-  setTimeout(() => {
-    updateProgress(40, 'Memproses data...');
-    const lines = rawText.split('\n');
-    let csv = 'NIK,NAMA,Waktu,Status\n';
-
-    lines.forEach(line => {
-      const nik = (line.match(/User ID:\s*([^,]+)/) || [])[1]?.trim() || "";
-      const nama = (line.match(/Nama:\s*(.+?),\s*Waktu:/) || [])[1]?.trim() || "";
-      let waktu = (line.match(/Waktu:\s*([^,]+)/) || [])[1]?.trim() || "";
-      let status = (line.match(/Status:\s*(\d+)/) || [])[1]?.trim() || "";
-
-      if (waktu.match(/^\d{4}-\d{2}-\d{2}/)) {
-        const [datePart, timePart] = waktu.split(' ');
-        const [y, m, d] = datePart.split('-');
-        const [hh, mm] = timePart.split(':');
-        waktu = `${d}/${m}/${y} ${hh}:${mm}`;
-      }
-      status = statusMap[status] || "C/Masuk";
-
-      csv += `${nik},"${nama}",${waktu},${status}\n`;
-    });
-
-    setTimeout(() => {
-      updateProgress(70, 'Menyiapkan file...');
-      const mode = document.querySelector('input[name="mode"]:checked').value;
-      const type = (mode === 'csv') ? 'text/csv' : 'text/plain';
-      const ext = (mode === 'csv') ? 'csv' : 'txt';
-
-      setTimeout(() => {
-        updateProgress(100, 'Selesai ✔️');
-        const blob = new Blob([csv], { type });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `data_absensi.${ext}`;
-        a.click();
-        URL.revokeObjectURL(url);
-
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onprogress = evt => {
+        if (evt.lengthComputable) {
+          const percent = Math.round((evt.loaded / evt.total) * 100);
+          updateProgress(percent, 'Membaca file');
+        }
+      };
+      reader.onloadstart = () => updateProgress(0, 'Membaca file');
+      reader.onload = evt => {
+        textarea.value = evt.target.result;
+        updateProgress(100, 'File berhasil dibaca ✔️');
         setTimeout(() => {
           progressContainer.style.display = 'none';
           progressStatus.style.display = 'none';
         }, 1000);
+      };
+      reader.readAsText(file);
+    });
+
+    textarea.addEventListener('dragover', e => { e.preventDefault(); textarea.classList.add('drop-hover'); });
+    textarea.addEventListener('dragleave', e => { textarea.classList.remove('drop-hover'); });
+    textarea.addEventListener('drop', e => {
+      e.preventDefault(); textarea.classList.remove('drop-hover');
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onprogress = evt => {
+          if (evt.lengthComputable) {
+            const percent = Math.round((evt.loaded / evt.total) * 100);
+            updateProgress(percent, 'Membaca file');
+          }
+        };
+        reader.onloadstart = () => updateProgress(0, 'Membaca file');
+        reader.onload = evt => {
+          textarea.value = evt.target.result;
+          updateProgress(100, 'File berhasil dibaca ✔️');
+          setTimeout(() => {
+            progressContainer.style.display = 'none';
+            progressStatus.style.display = 'none';
+          }, 1000);
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // exposed to window because it's called by onclick="window.convertAndDownload()"
+    window.convertAndDownload = function() {
+      const rawText = textarea.value.trim();
+      if (!rawText) { alert('Tempel atau upload data dulu ya.'); return; }
+
+      updateProgress(10, 'Memulai konversi');
+      setTimeout(() => {
+        updateProgress(40, 'Memproses data...');
+        const lines = rawText.split('\n');
+        let csv = 'NIK,NAMA,Waktu,Status\n';
+
+        lines.forEach(line => {
+          const nik = (line.match(/User ID:\s*([^,]+)/) || [])[1]?.trim() || "";
+          const nama = (line.match(/Nama:\s*(.+?),\s*Waktu:/) || [])[1]?.trim() || "";
+          let waktu = (line.match(/Waktu:\s*([^,]+)/) || [])[1]?.trim() || "";
+          let status = (line.match(/Status:\s*(\d+)/) || [])[1]?.trim() || "";
+
+          if (waktu.match(/^\d{4}-\d{2}-\d{2}/)) {
+            const [datePart, timePart] = waktu.split(' ');
+            const [y, m, d] = datePart.split('-');
+            const [hh, mm] = timePart.split(':');
+            waktu = `${d}/${m}/${y} ${hh}:${mm}`;
+          }
+          status = statusMap[status] || "C/Masuk";
+
+          csv += `${nik},"${nama}",${waktu},${status}\n`;
+        });
+
+        setTimeout(() => {
+          updateProgress(70, 'Menyiapkan file...');
+          const mode = document.querySelector('input[name="mode"]:checked').value;
+          const type = (mode === 'csv') ? 'text/csv' : 'text/plain';
+          const ext = (mode === 'csv') ? 'csv' : 'txt';
+
+          setTimeout(() => {
+            updateProgress(100, 'Selesai ✔️');
+            const blob = new Blob([csv], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `data_absensi.${ext}`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            setTimeout(() => {
+              progressContainer.style.display = 'none';
+              progressStatus.style.display = 'none';
+            }, 1000);
+          }, 500);
+        }, 500);
       }, 500);
-    }, 500);
-  }, 500);
-}; // End of window.convertAndDownload
-
-
-// Fungsi Logout - sudah window.logout
-window.logout = async () => {
-  try {
-    if (!auth || typeof signOut !== 'function') {
-        console.error("Firebase Auth atau fungsi signOut tidak diimpor atau diinisialisasi dengan benar.");
-        alert("Terjadi kesalahan saat logout. Coba lagi.");
-        return;
-    }
-    await signOut(auth); 
-    localStorage.removeItem("loginTime"); 
-    clearTimeout(inactivityTimeout);
-    window.location.href = "index.html"; 
-  } catch (e) {
-    alert("Logout gagal: " + (e.message || e));
-    console.error("Logout error:", e); 
-  }
-};
-
+    };
 </script>
 </body>
 </html>
-
