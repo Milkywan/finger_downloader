@@ -23,6 +23,20 @@
       color: white; text-decoration: none; margin-left: 1rem; transition: color .3s;
     }
     nav .menu a:hover, nav .menu a.active { color: #a5b4fc; }
+    nav .menu2 {
+      color: white;
+      cursor: pointer;
+      margin-left: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      background: rgba(255,255,255,0.1);
+      transition: background 0.3s, transform 0.2s;
+      font-weight: bold;
+    }
+    nav .menu2:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
     .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem; }
     .card {
       background: rgba(255,255,255,0.1);
@@ -82,6 +96,7 @@
       <a href="#" class="active">Absensi → CSV/TXT</a>
       <a href="https://irwanss.web.app/" target="_blank">Portfolio</a>
     </div>
+     <div class="menu2" onclick="window.logout()">Logout</div>
   </nav>
   <div class="container">
     <div class="card">
@@ -105,7 +120,41 @@
   </div>
   <footer>&copy; 2025 by <a href="https://irwanss.web.app" target="_blank">IrwanS</a></footer>
 
-<script>
+<script type="module">
+    // Import auth from your separate firebase-config.js file
+    import { auth } from './firebase-config.js'; 
+    // Import signOut directly from the Firebase Auth module
+    import { signOut } from 'https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js';
+
+
+    let mesinList = {};
+    let expiryDate = new Date("2025-12-15T00:00:00");
+
+    // --- FITUR LOGOUT OTOMATIS KARENA TIDAK AKTIF ---
+    let inactivityTimeout;
+    const LOGOUT_TIME_LIMIT = 10 * 60 * 1000; // 10 menit dalam milidetik (10 menit * 60 detik * 1000 milidetik)
+
+    function triggerLogout() { // Tidak perlu window. di sini karena dipanggil dari dalam
+        alert("Anda telah tidak aktif selama 10 menit. Anda akan di-logout otomatis.");
+        window.logout(); 
+    }
+    
+    // Fungsi ini perlu di-expose agar event listener bisa diatur di global scope (document)
+    window.resetInactivityTimer = function() {
+        clearTimeout(inactivityTimeout);
+        inactivityTimeout = setTimeout(triggerLogout, LOGOUT_TIME_LIMIT);
+    };
+
+    // Daftarkan event listener untuk memantau aktivitas pengguna
+    document.addEventListener('mousemove', window.resetInactivityTimer);
+    document.addEventListener('keydown', window.resetInactivityTimer);
+    document.addEventListener('click', window.resetInactivityTimer);
+    document.addEventListener('touchstart', window.resetInactivityTimer); 
+
+    // Mulai timer saat halaman dimuat
+    window.resetInactivityTimer();
+    // --- AKHIR FITUR LOGOUT OTOMATIS ---
+
 const statusMap = { "1": "C/Masuk", "2": "C/Keluar", "3": "Lembur Masuk", "4": "Lembur Keluar" };
 const fileInput = document.getElementById('fileInput');
 const textarea = document.getElementById('inputData');
@@ -220,8 +269,25 @@ function convertAndDownload() {
     }, 500);
   }, 500);
 }
+      // Fungsi Logout - sudah window.logout
+    window.logout = async () => {
+      try {
+        if (!auth || typeof signOut !== 'function') {
+            console.error("Firebase Auth atau fungsi signOut tidak diimpor atau diinisialisasi dengan benar.");
+            alert("Terjadi kesalahan saat logout. Coba lagi.");
+            return;
+        }
+        await signOut(auth); 
+        localStorage.removeItem("loginTime"); 
+        clearTimeout(inactivityTimeout);
+        window.location.href = "index.html"; 
+      } catch (e) {
+        alert("Logout gagal: " + (e.message || e));
+        console.error("Logout error:", e); 
+      }
 </script>
 </body>
 </html>
+
 
 
